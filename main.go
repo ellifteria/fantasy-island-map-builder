@@ -3,14 +3,21 @@ package main
 import (
 	"image"
 	"log"
+	"math"
 
 	"github.com/ellifteria/opensimplex2d-go"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
-	width  = 1000
-	height = 1000
+	Width             = 1000
+	Height            = 1000
+	Seed1             = 13
+	Seed2             = 259
+	ElevationExponent = 1.5
+	MoistureExponent  = 1.5
+	NoiseAmplitude    = 4
+	IslandPercent     = 0.4
 )
 
 type Game struct {
@@ -19,7 +26,7 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	length := width * height
+	length := Width * Height
 	for i := 0; i < length; i++ {
 		g.gameImage.Pix[4*i] = uint8(g.pixelArray[4*i+0])
 		g.gameImage.Pix[4*i+1] = uint8(g.pixelArray[4*i+1])
@@ -34,20 +41,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return width, height
+	return Width, Height
 }
 
-func getBiomeColor(height float64) [4]int {
+func getBiomeColor(elevation, moisture float64) [4]int {
 	switch {
-	case height < -0.5:
+	case elevation < 0.2:
 		return [4]int{1, 1, 122, 255}
-	case height < 0:
+	case elevation < 0.3:
 		return [4]int{3, 138, 255, 255}
-	case height < 0.25:
+	case elevation < 0.45:
 		return [4]int{243, 225, 107, 255}
-	case height < 0.5:
+	case elevation < 0.6:
 		return [4]int{22, 160, 133, 255}
-	case height < 0.75:
+	case elevation < 0.75:
 		return [4]int{108, 122, 137, 255}
 	default:
 		return [4]int{255, 255, 255, 255}
@@ -55,44 +62,67 @@ func getBiomeColor(height float64) [4]int {
 }
 
 func main() {
-	var heightArray [width][height]float64
+	var elevationArray [Width][Height]float64
+	var moistureArray [Width][Height]float64
 
-	openSimplexNoise := opensimplex2d.NewNoise(13)
+	elevationNoise := opensimplex2d.NewNoise(Seed1)
+	moistureNoise := opensimplex2d.NewNoise(Seed2)
 
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			nx := (0.01*width)*float64(x)/width - 0.5
-			ny := (0.01*height)*float64(y)/height - 0.5
-			heightArray[x][y] = openSimplexNoise.Noise2D(
-				float64(nx),
-				float64(ny),
-			)
-		}
-	}
+	for x := 0; x < Width; x++ {
+		for y := 0; y < Height; y++ {
+			nx := NoiseAmplitude * (2 * (float64(x) - Width/2) / Width)
+			ny := NoiseAmplitude * (2 * (float64(y) - Height/2) / Height)
 
-	var colorArray [width * height * 4]int
+			dx := nx / NoiseAmplitude
+			dy := ny / NoiseAmplitude
+			d := math.Min(1, (dx*dx+dy*dy)/math.Sqrt(2))
 
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			// color := getBiomeColor(heightArray[x][y])
-			color := [4]int{
-				int((heightArray[x][y] + 1.0) / 2.0 * 255),
-				int((heightArray[x][y] + 1.0) / 2.0 * 255),
-				int((heightArray[x][y] + 1.0) / 2.0 * 255),
-				int((heightArray[x][y] + 1.0) / 2.0 * 255),
+			var e float64 = 0.0
+			var eSum float64 = 0.0
+			eGains := [3]float64{1, 2, 4}
+			for i := range eGains {
+				e += (1 / eGains[i]) * elevationNoise.NormalizedNoise2D(eGains[i]*nx, eGains[i]*ny)
+				eSum += (1 / eGains[i])
 			}
-			colorArray[(x+y*width)*4+0] = color[0]
-			colorArray[(x+y*width)*4+1] = color[1]
-			colorArray[(x+y*width)*4+2] = color[2]
-			colorArray[(x+y*width)*4+3] = color[3]
+			e = e / (eSum)
+			e = (1-IslandPercent)*e + IslandPercent*(1-d)
+			elevationArray[x][y] = math.Pow(e, ElevationExponent)
+
+			var m float64 = 0.0
+			var mSum float64 = 0.0
+			mGains := [3]float64{1, 2, 4}
+			for i := range mGains {
+				m += (1 / mGains[i]) * moistureNoise.NormalizedNoise2D(mGains[i]*nx, mGains[i]*ny)
+				mSum += (1 / mGains[i])
+			}
+			m = m / (mSum)
+			moistureArray[x][y] = math.Pow(m, MoistureExponent)
 		}
 	}
 
-	ebiten.SetWindowSize(width, height)
+	var colorArray [Width * Height * 4]int
+
+	for x := 0; x < Width; x++ {
+		for y := 0; y < Height; y++ {
+			color := getBiomeColor(elevationArray[x][y], moistureArray[x][y])
+			// color := [4]int{
+			// 	int(elevationArray[x][y] * 255),
+			// 	int(elevationArray[x][y] * 255),
+			// 	int(elevationArray[x][y] * 255),
+			// 	int(elevationArray[x][y] * 255),
+			// }
+			colorArray[(x+y*Width)*4+0] = color[0]
+			colorArray[(x+y*Width)*4+1] = color[1]
+			colorArray[(x+y*Width)*4+2] = color[2]
+			colorArray[(x+y*Width)*4+3] = color[3]
+		}
+	}
+
+	ebiten.SetWindowSize(Width, Height)
 	ebiten.SetWindowTitle("Go Fantasy Map Builder")
 
 	g := &Game{
-		gameImage:  image.NewRGBA(image.Rect(0, 0, width, height)),
+		gameImage:  image.NewRGBA(image.Rect(0, 0, Width, Height)),
 		pixelArray: colorArray[:],
 	}
 
