@@ -1,7 +1,5 @@
 github.com/ebitengine/purego v0.4.0 h1:RQVuMIxQPQ5iCGEJvjQ17YOK+1tMKjVau2FUMvXH4HE=
 github.com/ebitengine/purego v0.4.0/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
-github.com/ellifteria/opensimplex2d-go v0.0.0-20230727160738-a1cbaa5533ef h1:C80W3crsQNOd2Y1k8jyVPyiuyGTrU9R+zmubsfTqxgI=
-github.com/ellifteria/opensimplex2d-go v0.0.0-20230727160738-a1cbaa5533ef/go.mod h1:mvoUQUBaoSvT+Unu52zZGHM3VL2k9thnOBbZ5TAi2+Y=
 github.com/ellifteria/opensimplex2d-go v0.0.1 h1:00nBHL+SlYlsjJVFVOnH81AcbF1cTBS2XWuUsdf3ZJE=
 github.com/ellifteria/opensimplex2d-go v0.0.1/go.mod h1:mvoUQUBaoSvT+Unu52zZGHM3VL2k9thnOBbZ5TAi2+Y=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b h1:GgabKamyOYguHqHjSkDACcgoPIz3w0Dis/zJ1wyHHHU=
@@ -13,8 +11,6 @@ github.com/jezek/xgb v1.1.0/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFl
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
-golang.org/x/exp v0.0.0-20230725093048-515e97ebf090 h1:Di6/M8l0O2lCLc6VVRWhgCiApHV8MnQurBnFSHsQtNY=
-golang.org/x/exp v0.0.0-20230725093048-515e97ebf090/go.mod h1:FXUEEKJgO7OQYeo8N01OfiKP8RXMtf6e8aTskBGqWdc=
 golang.org/x/exp/shiny v0.0.0-20230725093048-515e97ebf090 h1:nfjdoprNBcjd/lcK+b5UlX3rlqdAAgwhChdxzrz6kz0=
 golang.org/x/exp/shiny v0.0.0-20230725093048-515e97ebf090/go.mod h1:UH99kUObWAZkDnWqppdQe5ZhPYESUw8I0zVV1uWBR+0=
 golang.org/x/image v0.9.0 h1:QrzfX26snvCM20hIhBwuHI/ThTg18b/+kcKdXHvnR+g=

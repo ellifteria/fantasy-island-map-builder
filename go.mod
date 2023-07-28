@@ -1,11 +1,10 @@
-module github.com/ellifteria/fantasy-island-map-builder
+module github.com/ellifteria/fantasy-map-builder
 
 go 1.20
 
 require (
 	github.com/ellifteria/opensimplex2d-go v0.0.1
 	github.com/hajimehoshi/ebiten/v2 v2.5.6
-	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 )
 
 require (

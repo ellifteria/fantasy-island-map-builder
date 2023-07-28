@@ -1,37 +1,48 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"log"
 	"math"
+	"math/rand"
 
 	"github.com/ellifteria/opensimplex2d-go"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
-	Width             = 1000
+	Width             = 1200
 	Height            = 1000
-	Seed1             = 13
-	Seed2             = 259
 	ElevationExponent = 1.5
 	MoistureExponent  = 1.5
-	NoiseAmplitude    = 4
-	IslandPercent     = 0.4
+	NoiseAmplitude    = 4.5
+	IslandPercent     = 0.1
+)
+
+var (
+	ElevationSeed int64 = 13
+	MoistureSeed  int64 = 259
+	colorArray    []int = make([]int, Width*Height*4)
 )
 
 type Game struct {
-	gameImage  *image.RGBA
-	pixelArray []int
+	gameImage *image.RGBA
 }
 
 func (g *Game) Update() error {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		GenerateRandomSeeds()
+		GenerateMap()
+	}
+
 	length := Width * Height
 	for i := 0; i < length; i++ {
-		g.gameImage.Pix[4*i] = uint8(g.pixelArray[4*i+0])
-		g.gameImage.Pix[4*i+1] = uint8(g.pixelArray[4*i+1])
-		g.gameImage.Pix[4*i+2] = uint8(g.pixelArray[4*i+2])
-		g.gameImage.Pix[4*i+3] = uint8(g.pixelArray[4*i+3])
+		g.gameImage.Pix[4*i] = uint8(colorArray[4*i+0])
+		g.gameImage.Pix[4*i+1] = uint8(colorArray[4*i+1])
+		g.gameImage.Pix[4*i+2] = uint8(colorArray[4*i+2])
+		g.gameImage.Pix[4*i+3] = uint8(colorArray[4*i+3])
 	}
 	return nil
 }
@@ -44,7 +55,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return Width, Height
 }
 
-func getBiomeColor(elevation, moisture float64) [4]int {
+func GetBiomeColor(elevation, moisture float64) [4]int {
 	switch {
 	case elevation < 0.2:
 		return [4]int{1, 1, 122, 255}
@@ -61,12 +72,24 @@ func getBiomeColor(elevation, moisture float64) [4]int {
 	}
 }
 
-func main() {
+func GenerateRandomSeeds() {
+	ElevationSeed = rand.Int63()
+	MoistureSeed = rand.Int63()
+
+	for ElevationSeed == MoistureSeed {
+		MoistureSeed = rand.Int63()
+	}
+
+	fmt.Printf("Elevation seed: %d\n", ElevationSeed)
+	fmt.Printf("Moisture seed: %d\n", MoistureSeed)
+}
+
+func GenerateMap() {
 	var elevationArray [Width][Height]float64
 	var moistureArray [Width][Height]float64
 
-	elevationNoise := opensimplex2d.NewNoise(Seed1)
-	moistureNoise := opensimplex2d.NewNoise(Seed2)
+	elevationNoise := opensimplex2d.NewNoise(ElevationSeed)
+	moistureNoise := opensimplex2d.NewNoise(MoistureSeed)
 
 	for x := 0; x < Width; x++ {
 		for y := 0; y < Height; y++ {
@@ -100,11 +123,11 @@ func main() {
 		}
 	}
 
-	var colorArray [Width * Height * 4]int
+	colorArray = make([]int, Width*Height*4)
 
 	for x := 0; x < Width; x++ {
 		for y := 0; y < Height; y++ {
-			color := getBiomeColor(elevationArray[x][y], moistureArray[x][y])
+			color := GetBiomeColor(elevationArray[x][y], moistureArray[x][y])
 			// color := [4]int{
 			// 	int(elevationArray[x][y] * 255),
 			// 	int(elevationArray[x][y] * 255),
@@ -117,13 +140,16 @@ func main() {
 			colorArray[(x+y*Width)*4+3] = color[3]
 		}
 	}
+}
+
+func main() {
+	GenerateMap()
 
 	ebiten.SetWindowSize(Width, Height)
 	ebiten.SetWindowTitle("Go Fantasy Map Builder")
 
 	g := &Game{
-		gameImage:  image.NewRGBA(image.Rect(0, 0, Width, Height)),
-		pixelArray: colorArray[:],
+		gameImage: image.NewRGBA(image.Rect(0, 0, Width, Height)),
 	}
 
 	if err := ebiten.RunGame(g); err != nil {
