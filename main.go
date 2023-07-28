@@ -12,21 +12,56 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+// Map parameters
 const (
 	Width             = 1200
 	Height            = 1000
 	ElevationExponent = 1.5
 	MoistureExponent  = 1.5
 	NoiseAmplitude    = 4.5
-	IslandPercent     = 0.1
+	IslandPercent     = 0.5
 )
 
 var (
-	ElevationSeed int64 = 13
-	MoistureSeed  int64 = 259
-	colorArray    []int = make([]int, Width*Height*4)
+	ElevationSeed int64   = 13
+	MoistureSeed  int64   = 259
+	colorArray    []Color = make([]Color, Width*Height)
 )
 
+// Biome type
+type Biome int
+
+const (
+	Ocean Biome = iota
+	DeepOcean
+	ShallowOcean
+	Lake
+	Beach
+	Tundra
+	TemperateBroadleafForest
+	TemperateSteppe
+	SubtropicalRainforest
+	AridDesert
+	ShrubLand
+	DrySteppe
+	SemiArdDesert
+	GrassSavanna
+	TreeSavanna
+	DryForest
+	TropicalRainforest
+	AlpineTundra
+	MontaneForest
+)
+
+// Color type
+type Color struct {
+	R uint8
+	G uint8
+	B uint8
+	A uint8
+}
+
+// Ebiten game declarations
 type Game struct {
 	gameImage *image.RGBA
 }
@@ -39,10 +74,10 @@ func (g *Game) Update() error {
 
 	length := Width * Height
 	for i := 0; i < length; i++ {
-		g.gameImage.Pix[4*i] = uint8(colorArray[4*i+0])
-		g.gameImage.Pix[4*i+1] = uint8(colorArray[4*i+1])
-		g.gameImage.Pix[4*i+2] = uint8(colorArray[4*i+2])
-		g.gameImage.Pix[4*i+3] = uint8(colorArray[4*i+3])
+		g.gameImage.Pix[4*i+0] = colorArray[i].R
+		g.gameImage.Pix[4*i+1] = colorArray[i].G
+		g.gameImage.Pix[4*i+2] = colorArray[i].B
+		g.gameImage.Pix[4*i+3] = colorArray[i].A
 	}
 	return nil
 }
@@ -55,20 +90,79 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return Width, Height
 }
 
-func GetBiomeColor(elevation, moisture float64) [4]int {
+// Map creation functions
+func GetBiome(elevation, moisture, latitude float64) Biome {
 	switch {
 	case elevation < 0.2:
-		return [4]int{1, 1, 122, 255}
+		return DeepOcean
 	case elevation < 0.3:
-		return [4]int{3, 138, 255, 255}
+		return ShallowOcean
 	case elevation < 0.45:
-		return [4]int{243, 225, 107, 255}
-	case elevation < 0.6:
-		return [4]int{22, 160, 133, 255}
-	case elevation < 0.75:
-		return [4]int{108, 122, 137, 255}
+		switch {
+		case moisture < 0.3:
+			return AridDesert
+		case moisture < 0.375:
+			return SemiArdDesert
+		case moisture < 0.45:
+			return ShrubLand
+		case moisture < 0.65:
+			return TemperateSteppe
+		case moisture < 0.8:
+			return TemperateBroadleafForest
+		default:
+			return SubtropicalRainforest
+		}
+	case elevation < 0.55:
+		switch {
+		case moisture < 0.3:
+			return DrySteppe
+		}
+		return DrySteppe
 	default:
-		return [4]int{255, 255, 255, 255}
+		return AlpineTundra
+	}
+}
+
+func GetBiomeColor(elevation, moisture, latitude float64) Color {
+	biome := GetBiome(elevation, moisture, latitude)
+
+	switch biome {
+	case DeepOcean:
+		return Color{R: 1, G: 1, B: 122, A: 255}
+	case ShallowOcean:
+		return Color{R: 3, G: 138, B: 255, A: 255}
+	case Beach:
+		return Color{R: 243, G: 225, B: 107, A: 255}
+	case Tundra:
+		return Color{R: 154, G: 202, B: 189, A: 255}
+	case TemperateSteppe:
+		return Color{R: 243, G: 231, B: 113, A: 255}
+	case TemperateBroadleafForest:
+		return Color{R: 161, G: 214, B: 94, A: 255}
+	case SubtropicalRainforest:
+		return Color{R: 45, G: 102, B: 28, A: 255}
+	case AridDesert:
+		return Color{R: 121, G: 69, B: 46, A: 255}
+	case ShrubLand:
+		return Color{R: 160, G: 99, B: 68, A: 255}
+	case DrySteppe:
+		return Color{R: 132, G: 112, B: 60, A: 255}
+	case SemiArdDesert:
+		return Color{R: 207, G: 171, B: 122, A: 255}
+	case GrassSavanna:
+		return Color{R: 192, G: 189, B: 84, A: 255}
+	case TreeSavanna:
+		return Color{R: 154, G: 149, B: 50, A: 255}
+	case DryForest:
+		return Color{R: 101, G: 121, B: 49, A: 255}
+	case TropicalRainforest:
+		return Color{R: 27, G: 69, B: 14, A: 255}
+	case AlpineTundra:
+		return Color{R: 154, G: 173, B: 207, A: 255}
+	case MontaneForest:
+		return Color{R: 68, G: 129, B: 131, A: 255}
+	default:
+		return Color{R: 0, G: 0, B: 0, A: 255}
 	}
 }
 
@@ -123,25 +217,18 @@ func GenerateMap() {
 		}
 	}
 
-	colorArray = make([]int, Width*Height*4)
+	colorArray = make([]Color, Width*Height)
 
 	for x := 0; x < Width; x++ {
 		for y := 0; y < Height; y++ {
-			color := GetBiomeColor(elevationArray[x][y], moistureArray[x][y])
-			// color := [4]int{
-			// 	int(elevationArray[x][y] * 255),
-			// 	int(elevationArray[x][y] * 255),
-			// 	int(elevationArray[x][y] * 255),
-			// 	int(elevationArray[x][y] * 255),
-			// }
-			colorArray[(x+y*Width)*4+0] = color[0]
-			colorArray[(x+y*Width)*4+1] = color[1]
-			colorArray[(x+y*Width)*4+2] = color[2]
-			colorArray[(x+y*Width)*4+3] = color[3]
+			color := GetBiomeColor(elevationArray[x][y],
+				moistureArray[x][y], 2.0*float64(y)/float64(Height)-1.0)
+			colorArray[(x + y*Width)] = color
 		}
 	}
 }
 
+// Main function
 func main() {
 	GenerateMap()
 
