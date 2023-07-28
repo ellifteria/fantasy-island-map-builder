@@ -16,10 +16,10 @@ import (
 const (
 	Width             = 1200
 	Height            = 1000
-	ElevationExponent = 1.5
-	MoistureExponent  = 1.5
-	NoiseAmplitude    = 4.5
-	IslandPercent     = 0.5
+	ElevationExponent = 1.7
+	MoistureExponent  = 1.7
+	NoiseAmplitude    = 5
+	IslandPercent     = 0.1
 )
 
 var (
@@ -91,78 +91,136 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 // Map creation functions
-func GetBiome(elevation, moisture, latitude float64) Biome {
-	switch {
-	case elevation < 0.2:
-		return DeepOcean
-	case elevation < 0.3:
-		return ShallowOcean
-	case elevation < 0.45:
-		switch {
-		case moisture < 0.3:
-			return AridDesert
-		case moisture < 0.375:
-			return SemiArdDesert
-		case moisture < 0.45:
-			return ShrubLand
-		case moisture < 0.65:
-			return TemperateSteppe
-		case moisture < 0.8:
-			return TemperateBroadleafForest
-		default:
-			return SubtropicalRainforest
-		}
-	case elevation < 0.55:
-		switch {
-		case moisture < 0.3:
-			return DrySteppe
-		}
-		return DrySteppe
-	default:
-		return AlpineTundra
-	}
-}
+// func GetBiome(elevation, moisture, latitude float64) Biome {
+// 	// switch {
+// 	// case elevation < 0.2:
+// 	// 	return DeepOcean
+// 	// case elevation < 0.3:
+// 	// 	return ShallowOcean
+// 	// case elevation < 0.45:
+// 	// 	switch {
+// 	// 	case moisture < 0.3:
+// 	// 		return AridDesert
+// 	// 	case moisture < 0.375:
+// 	// 		return SemiArdDesert
+// 	// 	case moisture < 0.45:
+// 	// 		return ShrubLand
+// 	// 	case moisture < 0.65:
+// 	// 		return TemperateSteppe
+// 	// 	case moisture < 0.8:
+// 	// 		return TemperateBroadleafForest
+// 	// 	default:
+// 	// 		return SubtropicalRainforest
+// 	// 	}
+// 	// case elevation < 0.55:
+// 	// 	switch {
+// 	// 	case moisture < 0.3:
+// 	// 		return DrySteppe
+// 	// 	}
+// 	// 	return DrySteppe
+// 	// default:
+// 	// 	return AlpineTundra
+// 	// }
+
+// 	switch {
+// 	case elevation < 0.2:
+// 		return Ocean
+// 	}
+// }
+
+// func GetBiomeColor(elevation, moisture, latitude float64) Color {
+// 	biome := GetBiome(elevation, moisture, latitude)
+
+// 	switch biome {
+// 	case DeepOcean:
+// 		return Color{R: 1, G: 1, B: 122, A: 255}
+// 	case ShallowOcean:
+// 		return Color{R: 3, G: 138, B: 255, A: 255}
+// 	case Ocean:
+// 		return Color{R: 68, G: 68, B: 68, A: 255}
+// 	case Beach:
+// 		return Color{R: 243, G: 225, B: 107, A: 255}
+// 	case Tundra:
+// 		return Color{R: 154, G: 202, B: 189, A: 255}
+// 	case TemperateSteppe:
+// 		return Color{R: 243, G: 231, B: 113, A: 255}
+// 	case TemperateBroadleafForest:
+// 		return Color{R: 161, G: 214, B: 94, A: 255}
+// 	case SubtropicalRainforest:
+// 		return Color{R: 45, G: 102, B: 28, A: 255}
+// 	case AridDesert:
+// 		return Color{R: 121, G: 69, B: 46, A: 255}
+// 	case ShrubLand:
+// 		return Color{R: 160, G: 99, B: 68, A: 255}
+// 	case DrySteppe:
+// 		return Color{R: 132, G: 112, B: 60, A: 255}
+// 	case SemiArdDesert:
+// 		return Color{R: 207, G: 171, B: 122, A: 255}
+// 	case GrassSavanna:
+// 		return Color{R: 192, G: 189, B: 84, A: 255}
+// 	case TreeSavanna:
+// 		return Color{R: 154, G: 149, B: 50, A: 255}
+// 	case DryForest:
+// 		return Color{R: 101, G: 121, B: 49, A: 255}
+// 	case TropicalRainforest:
+// 		return Color{R: 27, G: 69, B: 14, A: 255}
+// 	case AlpineTundra:
+// 		return Color{R: 154, G: 173, B: 207, A: 255}
+// 	case MontaneForest:
+// 		return Color{R: 68, G: 129, B: 131, A: 255}
+// 	default:
+// 		return Color{R: 0, G: 0, B: 0, A: 255}
+// 	}
+// }
 
 func GetBiomeColor(elevation, moisture, latitude float64) Color {
-	biome := GetBiome(elevation, moisture, latitude)
-
-	switch biome {
-	case DeepOcean:
-		return Color{R: 1, G: 1, B: 122, A: 255}
-	case ShallowOcean:
-		return Color{R: 3, G: 138, B: 255, A: 255}
-	case Beach:
-		return Color{R: 243, G: 225, B: 107, A: 255}
-	case Tundra:
-		return Color{R: 154, G: 202, B: 189, A: 255}
-	case TemperateSteppe:
-		return Color{R: 243, G: 231, B: 113, A: 255}
-	case TemperateBroadleafForest:
-		return Color{R: 161, G: 214, B: 94, A: 255}
-	case SubtropicalRainforest:
-		return Color{R: 45, G: 102, B: 28, A: 255}
-	case AridDesert:
-		return Color{R: 121, G: 69, B: 46, A: 255}
-	case ShrubLand:
-		return Color{R: 160, G: 99, B: 68, A: 255}
-	case DrySteppe:
-		return Color{R: 132, G: 112, B: 60, A: 255}
-	case SemiArdDesert:
-		return Color{R: 207, G: 171, B: 122, A: 255}
-	case GrassSavanna:
-		return Color{R: 192, G: 189, B: 84, A: 255}
-	case TreeSavanna:
-		return Color{R: 154, G: 149, B: 50, A: 255}
-	case DryForest:
-		return Color{R: 101, G: 121, B: 49, A: 255}
-	case TropicalRainforest:
-		return Color{R: 27, G: 69, B: 14, A: 255}
-	case AlpineTundra:
-		return Color{R: 154, G: 173, B: 207, A: 255}
-	case MontaneForest:
-		return Color{R: 68, G: 129, B: 131, A: 255}
+	switch {
+	case elevation < 0.25:
+		return Color{68, 68, 118, 255}
+	case elevation < 0.275:
+		return Color{157, 145, 122, 255}
+	case elevation < 0.45:
+		switch {
+		case moisture < 0.16:
+			return Color{203, 210, 161, 255}
+		case moisture < 0.33:
+			return Color{143, 169, 96, 255}
+		case moisture < 0.66:
+			return Color{101, 151, 79, 255}
+		default:
+			return Color{69, 117, 88, 255}
+		}
+	case elevation < 0.65:
+		switch {
+		case moisture < 0.16:
+			return Color{203, 210, 161, 255}
+		case moisture < 0.5:
+			return Color{143, 169, 96, 255}
+		case moisture < 0.83:
+			return Color{113, 147, 95, 255}
+		default:
+			return Color{85, 134, 90, 255}
+		}
+	case elevation < 0.85:
+		switch {
+		case moisture < 0.33:
+			return Color{203, 210, 161, 255}
+		case moisture < 0.66:
+			return Color{139, 152, 122, 255}
+		default:
+			return Color{156, 170, 124, 255}
+		}
 	default:
-		return Color{R: 0, G: 0, B: 0, A: 255}
+		switch {
+		case moisture < 0.1:
+			return Color{85, 85, 85, 255}
+		case moisture < 0.2:
+			return Color{136, 136, 136, 255}
+		case moisture < 0.5:
+			return Color{187, 187, 172, 255}
+		default:
+			return Color{221, 221, 227, 255}
+		}
 	}
 }
 
@@ -233,7 +291,7 @@ func main() {
 	GenerateMap()
 
 	ebiten.SetWindowSize(Width, Height)
-	ebiten.SetWindowTitle("Go Fantasy Map Builder")
+	ebiten.SetWindowTitle("Fantasy Map Builder")
 
 	g := &Game{
 		gameImage: image.NewRGBA(image.Rect(0, 0, Width, Height)),
