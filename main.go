@@ -14,44 +14,49 @@ import (
 
 // Map parameters
 const (
-	Width             = 1200
-	Height            = 1000
-	ElevationExponent = 1.7
-	MoistureExponent  = 1.7
-	NoiseAmplitude    = 5
-	IslandPercent     = 0.1
+	Width                      = 1200
+	Height                     = 1000
+	ElevationExponent          = 2
+	MoistureExponent           = 1
+	ElevationAmplitude         = 8
+	MoistureAmplitude          = 4
+	IslandPercent              = 0.25
+	WaterLevel                 = 0.25
+	Gamma              float64 = 0.5
+	ShadowSlope        float64 = 0.002
 )
 
 var (
-	ElevationSeed int64   = 13
-	MoistureSeed  int64   = 259
-	colorArray    []Color = make([]Color, Width*Height)
+	ElevationSeed  int64 = 13
+	MoistureSeed   int64 = 259
+	ElevationGains       = [3]float64{1, 2, 4}
+	MoistureGains        = [3]float64{1, 2, 4}
 )
 
-// Biome type
-type Biome int
+// // Biome type
+// type Biome int
 
-const (
-	Ocean Biome = iota
-	DeepOcean
-	ShallowOcean
-	Lake
-	Beach
-	Tundra
-	TemperateBroadleafForest
-	TemperateSteppe
-	SubtropicalRainforest
-	AridDesert
-	ShrubLand
-	DrySteppe
-	SemiArdDesert
-	GrassSavanna
-	TreeSavanna
-	DryForest
-	TropicalRainforest
-	AlpineTundra
-	MontaneForest
-)
+// const (
+// 	Ocean Biome = iota
+// 	DeepOcean
+// 	ShallowOcean
+// 	Lake
+// 	Beach
+// 	Tundra
+// 	TemperateBroadleafForest
+// 	TemperateSteppe
+// 	SubtropicalRainforest
+// 	AridDesert
+// 	ShrubLand
+// 	DrySteppe
+// 	SemiArdDesert
+// 	GrassSavanna
+// 	TreeSavanna
+// 	DryForest
+// 	TropicalRainforest
+// 	AlpineTundra
+// 	MontaneForest
+// )
 
 // Color type
 type Color struct {
@@ -60,6 +65,13 @@ type Color struct {
 	B uint8
 	A uint8
 }
+
+// Image arrays
+var (
+	ElevationArray []float64 = make([]float64, Width*Height)
+	MoistureArray  []float64 = make([]float64, Width*Height)
+	colorArray     []Color   = make([]Color, Width*Height)
+)
 
 // Ebiten game declarations
 type Game struct {
@@ -70,6 +82,9 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		GenerateRandomSeeds()
 		GenerateMap()
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		AddShadow()
 	}
 
 	length := Width * Height
@@ -90,96 +105,47 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return Width, Height
 }
 
-// Map creation functions
-// func GetBiome(elevation, moisture, latitude float64) Biome {
-// 	// switch {
-// 	// case elevation < 0.2:
-// 	// 	return DeepOcean
-// 	// case elevation < 0.3:
-// 	// 	return ShallowOcean
-// 	// case elevation < 0.45:
-// 	// 	switch {
-// 	// 	case moisture < 0.3:
-// 	// 		return AridDesert
-// 	// 	case moisture < 0.375:
-// 	// 		return SemiArdDesert
-// 	// 	case moisture < 0.45:
-// 	// 		return ShrubLand
-// 	// 	case moisture < 0.65:
-// 	// 		return TemperateSteppe
-// 	// 	case moisture < 0.8:
-// 	// 		return TemperateBroadleafForest
-// 	// 	default:
-// 	// 		return SubtropicalRainforest
-// 	// 	}
-// 	// case elevation < 0.55:
-// 	// 	switch {
-// 	// 	case moisture < 0.3:
-// 	// 		return DrySteppe
-// 	// 	}
-// 	// 	return DrySteppe
-// 	// default:
-// 	// 	return AlpineTundra
-// 	// }
+func AddShadow() {
 
-// 	switch {
-// 	case elevation < 0.2:
-// 		return Ocean
-// 	}
-// }
-
-// func GetBiomeColor(elevation, moisture, latitude float64) Color {
-// 	biome := GetBiome(elevation, moisture, latitude)
-
-// 	switch biome {
-// 	case DeepOcean:
-// 		return Color{R: 1, G: 1, B: 122, A: 255}
-// 	case ShallowOcean:
-// 		return Color{R: 3, G: 138, B: 255, A: 255}
-// 	case Ocean:
-// 		return Color{R: 68, G: 68, B: 68, A: 255}
-// 	case Beach:
-// 		return Color{R: 243, G: 225, B: 107, A: 255}
-// 	case Tundra:
-// 		return Color{R: 154, G: 202, B: 189, A: 255}
-// 	case TemperateSteppe:
-// 		return Color{R: 243, G: 231, B: 113, A: 255}
-// 	case TemperateBroadleafForest:
-// 		return Color{R: 161, G: 214, B: 94, A: 255}
-// 	case SubtropicalRainforest:
-// 		return Color{R: 45, G: 102, B: 28, A: 255}
-// 	case AridDesert:
-// 		return Color{R: 121, G: 69, B: 46, A: 255}
-// 	case ShrubLand:
-// 		return Color{R: 160, G: 99, B: 68, A: 255}
-// 	case DrySteppe:
-// 		return Color{R: 132, G: 112, B: 60, A: 255}
-// 	case SemiArdDesert:
-// 		return Color{R: 207, G: 171, B: 122, A: 255}
-// 	case GrassSavanna:
-// 		return Color{R: 192, G: 189, B: 84, A: 255}
-// 	case TreeSavanna:
-// 		return Color{R: 154, G: 149, B: 50, A: 255}
-// 	case DryForest:
-// 		return Color{R: 101, G: 121, B: 49, A: 255}
-// 	case TropicalRainforest:
-// 		return Color{R: 27, G: 69, B: 14, A: 255}
-// 	case AlpineTundra:
-// 		return Color{R: 154, G: 173, B: 207, A: 255}
-// 	case MontaneForest:
-// 		return Color{R: 68, G: 129, B: 131, A: 255}
-// 	default:
-// 		return Color{R: 0, G: 0, B: 0, A: 255}
-// 	}
-// }
+	var shadowArray []float64 = make([]float64, Width*Height)
+	for y := 0; y < Height; y++ {
+		shadowArray[y*Width] = 0
+	}
+	for x := 1; x < Width; x++ {
+		for y := 0; y < Height; y++ {
+			if ElevationArray[((x-1)+y*Width)] > WaterLevel {
+				shadowArray[(x + y*Width)] = math.Max(shadowArray[((x-1)+y*Width)],
+					ElevationArray[((x-1)+y*Width)]) - ShadowSlope
+			} else {
+				shadowArray[(x + y*Width)] = shadowArray[((x-1)+y*Width)] -
+					ShadowSlope
+			}
+		}
+	}
+	for x := 0; x < Width; x++ {
+		for y := 0; y < Height; y++ {
+			if shadowArray[(x+y*Width)] > ElevationArray[(x+y*Width)] {
+				currentColor := colorArray[(x + y*Width)]
+				newR := uint8(math.Pow(float64(currentColor.R)/255.0,
+					1.0/Gamma) * 255.0)
+				newB := uint8(math.Pow(float64(currentColor.B)/255.0,
+					1.0/Gamma) * 255.0)
+				newG := uint8(math.Pow(float64(currentColor.G)/255.0,
+					1.0/Gamma) * 255.0)
+				newColor := Color{newR, newG, newB, currentColor.A}
+				colorArray[(x + y*Width)] = newColor
+			}
+		}
+	}
+}
 
 func GetBiomeColor(elevation, moisture, latitude float64) Color {
 	switch {
-	case elevation < 0.25:
-		return Color{68, 68, 118, 255}
-	case elevation < 0.275:
+	case elevation <= WaterLevel:
+		return Color{20, 52, 164, 255}
+	case elevation < WaterLevel+0.025:
 		return Color{157, 145, 122, 255}
-	case elevation < 0.45:
+	case elevation < 0.5:
 		switch {
 		case moisture < 0.16:
 			return Color{203, 210, 161, 255}
@@ -190,7 +156,7 @@ func GetBiomeColor(elevation, moisture, latitude float64) Color {
 		default:
 			return Color{69, 117, 88, 255}
 		}
-	case elevation < 0.65:
+	case elevation < 0.75:
 		switch {
 		case moisture < 0.16:
 			return Color{203, 210, 161, 255}
@@ -201,7 +167,7 @@ func GetBiomeColor(elevation, moisture, latitude float64) Color {
 		default:
 			return Color{85, 134, 90, 255}
 		}
-	case elevation < 0.85:
+	case elevation < 0.9:
 		switch {
 		case moisture < 0.33:
 			return Color{203, 210, 161, 255}
@@ -237,41 +203,47 @@ func GenerateRandomSeeds() {
 }
 
 func GenerateMap() {
-	var elevationArray [Width][Height]float64
-	var moistureArray [Width][Height]float64
+	ElevationArray = make([]float64, Width*Height)
+	MoistureArray = make([]float64, Width*Height)
 
 	elevationNoise := opensimplex2d.NewNoise(ElevationSeed)
 	moistureNoise := opensimplex2d.NewNoise(MoistureSeed)
 
 	for x := 0; x < Width; x++ {
 		for y := 0; y < Height; y++ {
-			nx := NoiseAmplitude * (2 * (float64(x) - Width/2) / Width)
-			ny := NoiseAmplitude * (2 * (float64(y) - Height/2) / Height)
+			nXE := ElevationAmplitude * (2 * (float64(x) - Width/2) / Width)
+			nYE := ElevationAmplitude * (2 * (float64(y) - Height/2) / Height)
 
-			dx := nx / NoiseAmplitude
-			dy := ny / NoiseAmplitude
-			d := math.Min(1, (dx*dx+dy*dy)/math.Sqrt(2))
+			dXE := nXE / ElevationAmplitude
+			dYE := nYE / ElevationAmplitude
+			dE := math.Min(1, (dXE*dXE+dYE*dYE)/math.Sqrt(2))
 
 			var e float64 = 0.0
 			var eSum float64 = 0.0
-			eGains := [3]float64{1, 2, 4}
-			for i := range eGains {
-				e += (1 / eGains[i]) * elevationNoise.NormalizedNoise2D(eGains[i]*nx, eGains[i]*ny)
-				eSum += (1 / eGains[i])
+			ElevationGains := [3]float64{1, 2, 4}
+			for i := range ElevationGains {
+				e += (1 / ElevationGains[i]) *
+					elevationNoise.NormalizedNoise2D(ElevationGains[i]*nXE,
+						ElevationGains[i]*nYE)
+				eSum += (1 / ElevationGains[i])
 			}
 			e = e / (eSum)
-			e = (1-IslandPercent)*e + IslandPercent*(1-d)
-			elevationArray[x][y] = math.Pow(e, ElevationExponent)
+			e = (1-IslandPercent)*e + IslandPercent*(1-dE)
+			ElevationArray[y*Width+x] = math.Pow(e, ElevationExponent)
+
+			nXM := MoistureAmplitude * (2 * (float64(x) - Width/2) / Width)
+			nYM := MoistureAmplitude * (2 * (float64(y) - Height/2) / Height)
 
 			var m float64 = 0.0
 			var mSum float64 = 0.0
-			mGains := [3]float64{1, 2, 4}
-			for i := range mGains {
-				m += (1 / mGains[i]) * moistureNoise.NormalizedNoise2D(mGains[i]*nx, mGains[i]*ny)
-				mSum += (1 / mGains[i])
+			for i := range MoistureGains {
+				m += (1 / MoistureGains[i]) *
+					moistureNoise.NormalizedNoise2D(MoistureGains[i]*nXM,
+						MoistureGains[i]*nYM)
+				mSum += (1 / MoistureGains[i])
 			}
 			m = m / (mSum)
-			moistureArray[x][y] = math.Pow(m, MoistureExponent)
+			MoistureArray[y*Width+x] = math.Pow(m, MoistureExponent)
 		}
 	}
 
@@ -279,8 +251,11 @@ func GenerateMap() {
 
 	for x := 0; x < Width; x++ {
 		for y := 0; y < Height; y++ {
-			color := GetBiomeColor(elevationArray[x][y],
-				moistureArray[x][y], 2.0*float64(y)/float64(Height)-1.0)
+			if ElevationArray[x+y*Width] < WaterLevel {
+				ElevationArray[x+y*Width] = WaterLevel
+			}
+			color := GetBiomeColor(ElevationArray[x+y*Width],
+				MoistureArray[x+y*Width], 2.0*float64(y)/float64(Height)-1.0)
 			colorArray[(x + y*Width)] = color
 		}
 	}
